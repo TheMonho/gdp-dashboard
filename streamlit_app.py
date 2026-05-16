@@ -4,24 +4,24 @@ import pandas as pd
 # Configuração da página em modo amplo para caber a grade completa
 st.set_page_config(page_title="Sistema GSAN", page_icon="🎵", layout="wide")
 
-# Usamos apenas o ID limpo da sua planilha para evitar erros de link quebrado
+# Link de exportação direta em CSV para evitar erros de serviço de rede (DNS) do Google
 ID_PLANILHA = "187NTVcRoa_6VJ-vSqyJFjic-OyJ25hU7g7akQQ2TpT8"
-BASE_URL = f"https://google.com{ID_PLANILHA}/gviz/tq?tqx=out:csv"
+URL_BASE = f"https://google.com{ID_PLANILHA}/export?format=csv"
 
 @st.cache_data(ttl=5) # Atualiza rápido para testes (5 segundos)
-def puxar_dados_seguros():
+def puxar_dados_diretos():
     try:
-        # Puxa cada aba informando o nome exato delas na planilha
-        prof = pd.read_csv(f"{BASE_URL}&sheet=PROFESSORES").dropna(how='all')
-        alun = pd.read_csv(f"{BASE_URL}&sheet=ALUNOS").dropna(how='all')
-        agen = pd.read_csv(f"{BASE_URL}&sheet=AGENDA+FIXA").dropna(how='all')
-        inve = pd.read_csv(f"{BASE_URL}&sheet=INVENTÁRIO").dropna(how='all')
+        # Puxa cada aba informando o GID exato coletado da sua planilha oficial
+        prof = pd.read_csv(f"{URL_BASE}&gid=0").dropna(how='all')
+        alun = pd.read_csv(f"{URL_BASE}&gid=527022067").dropna(how='all')
+        agen = pd.read_csv(f"{URL_BASE}&gid=1410756770").dropna(how='all')
+        inve = pd.read_csv(f"{URL_BASE}&gid=64547285").dropna(how='all')
         return prof, alun, agen, inve
     except Exception as e:
-        st.error(f"Erro na leitura: {e}")
+        st.error(f"Erro na leitura direta: {e}")
         return None, None, None, None
 
-df_prof, df_alunos, df_agenda, df_inventario = puxar_dados_seguros()
+df_prof, df_alunos, df_agenda, df_inventario = puxar_dados_diretos()
 
 st.title("🎵 SISTEMA GSAN")
 
@@ -42,7 +42,7 @@ else:
         
         professor_selecionado = st.selectbox("Selecione o Professor:", lista_professores)
         
-        # Cria a matriz padrão da grade horária
+        # Cria a matriz padrão da grade horária (08:00 às 21:00)
         dias_semana = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"]
         horarios_escola = [f"{hora:02d}:00" for hora in range(8, 22)]
         matriz_grade = pd.DataFrame("-", index=dias_semana, columns=horarios_escola)
